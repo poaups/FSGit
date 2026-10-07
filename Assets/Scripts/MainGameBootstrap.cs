@@ -9,14 +9,58 @@ public class MainGameBootstrap : MonoBehaviour
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private Vector3 playerSpawn = new Vector3(0f, 0.1f, 0f);
 
+    [Header("Options")]
+    [Tooltip("Crée une lumière directionnelle. À désactiver si la scène en a déjà une.")]
+    [SerializeField] private bool createLighting = true;
+    [Tooltip("Ajoute escaliers, rampe et plateformes pour tester les déplacements.")]
+    [SerializeField] private bool createMovementCourse = false;
+    [SerializeField] private bool showControlsHint = false;
+
     private void Start()
     {
         EnsurePlayer();
         CreateGround();
         CreateBoundaryWalls();
         CreateCrates();
-        CreateLighting();
+        if (createLighting)
+            CreateLighting();
+        if (createMovementCourse)
+            CreateMovementCourse();
         CreateTargets();
+    }
+
+    private void OnGUI()
+    {
+        if (!showControlsHint)
+            return;
+
+        GUI.Label(new Rect(16f, 12f, 700f, 28f),
+            "ZQSD / WASD : déplacement   |   Maj : courir   |   Espace : sauter   |   Clic : tirer   |   R : recharger   |   Échap : libérer la souris");
+    }
+
+    /// <summary>Escaliers, rampe et plateformes de hauteurs croissantes pour essayer marche, saut et pentes.</summary>
+    private static void CreateMovementCourse()
+    {
+        Color stoneColor = new Color(0.5f, 0.54f, 0.6f);
+        Color accentColor = new Color(0.82f, 0.45f, 0.18f);
+
+        // Escalier de 6 marches (0,25 m chacune) menant à une plate-forme haute.
+        const float stepHeight = 0.25f;
+        for (int i = 0; i < 6; i++)
+        {
+            float height = stepHeight * (i + 1);
+            CreateBlock("Stair " + (i + 1), new Vector3(-8f, height * 0.5f, 4f + i * 0.6f), new Vector3(3f, height, 0.6f), stoneColor);
+        }
+        CreateBlock("Stair Landing", new Vector3(-8f, 0.75f, 8.85f), new Vector3(3f, 1.5f, 2.5f), accentColor);
+
+        // Rampe à 20° (la limite de pente du joueur est 45°).
+        GameObject ramp = CreateBlock("Ramp", new Vector3(11f, 1f, 5f), new Vector3(3f, 0.3f, 6f), stoneColor);
+        ramp.transform.rotation = Quaternion.Euler(-20f, 0f, 0f);
+
+        // Plateformes à sauter : 0,5 m, 0,9 m puis 1,1 m (le saut atteint environ 1,2 m).
+        CreateBlock("Jump Platform 1", new Vector3(-12f, 0.25f, -6f), new Vector3(2f, 0.5f, 2f), accentColor);
+        CreateBlock("Jump Platform 2", new Vector3(-12f, 0.45f, -3f), new Vector3(2f, 0.9f, 2f), accentColor);
+        CreateBlock("Jump Platform 3", new Vector3(-12f, 0.55f, 0f), new Vector3(2f, 1.1f, 2f), accentColor);
     }
 
     private void EnsurePlayer()
